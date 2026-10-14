@@ -36,6 +36,14 @@
                   { name = "Checkout repository"; uses = "actions/checkout@v4"; }
                   { name = "Install Nix"; uses = "cachix/install-nix-action@v31"; }
                   {
+                    # nixpkgs' platformio runs inside a bubblewrap sandbox;
+                    # Ubuntu 24.04+ runners restrict unprivileged user
+                    # namespaces via AppArmor, which breaks bwrap with
+                    # "setting up uid map: Permission denied".
+                    name = "Allow unprivileged user namespaces";
+                    run = "sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0";
+                  }
+                  {
                     name = "Build WisMesh Tag Binary";
                     run = "nix develop --command ./build.sh rak_wismeshtag";
                   }
