@@ -11,8 +11,6 @@ jobs:
       uses: actions/checkout@v4
     - name: Install Nix
       uses: cachix/install-nix-action@v31
-    - name: Allow unprivileged user namespaces
-      run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
     - name: Build WisMesh Tag Binary
       run: nix develop --command ./build.sh rak_wismeshtag
     - name: Upload Firmware Artifact

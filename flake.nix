@@ -36,14 +36,6 @@
                   { name = "Checkout repository"; uses = "actions/checkout@v4"; }
                   { name = "Install Nix"; uses = "cachix/install-nix-action@v31"; }
                   {
-                    # nixpkgs' platformio runs inside a bubblewrap sandbox;
-                    # Ubuntu 24.04+ runners restrict unprivileged user
-                    # namespaces via AppArmor, which breaks bwrap with
-                    # "setting up uid map: Permission denied".
-                    name = "Allow unprivileged user namespaces";
-                    run = "sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0";
-                  }
-                  {
                     name = "Build WisMesh Tag Binary";
                     run = "nix develop --command ./build.sh rak_wismeshtag";
                   }
@@ -64,9 +56,17 @@
 
       perSystem = { config, pkgs, ... }: {
         devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [ platformio git python3 ];
+          # platformio-core runs PlatformIO natively and needs no user
+          # namespaces — required on GitHub Actions' Ubuntu runners, whose
+          # AppArmor policy blocks bubblewrap. On NixOS (no FHS runtime for
+          # PlatformIO's downloaded toolchains) the shellHook below prefers
+          # the bubblewrap-FHS wrapped platformio instead.
+          buildInputs = with pkgs; [ platformio-core git python3 ];
 
           shellHook = ''
+            if [ -e /etc/NIXOS ]; then
+              export PATH="${pkgs.lib.makeBinPath [ pkgs.platformio ]}:$PATH"
+            fi
             ${config.pre-commit.installationScript}
             echo "Beacon Module Dev Environment Loaded."
             echo "GitHub Actions YAMLs will auto-generate on your next 'git commit'."

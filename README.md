@@ -78,6 +78,12 @@ The GitHub Actions workflow (`.github/workflows/build.yaml`) is generated from
 written automatically by the pre-commit hook on your next `git commit` after
 `nix develop`.
 
+The dev shell installs the unwrapped `platformio-core`, which needs no user
+namespaces — GitHub's Ubuntu 24.04+ runners restrict those via AppArmor, which
+breaks the bubblewrap-sandboxed `platformio` package. On NixOS hosts (which
+lack the FHS runtime for PlatformIO's downloaded toolchains) the shell hook
+automatically prefers the bubblewrap-wrapped `platformio` instead.
+
 ## Implementation notes
 
 - The module subclasses Meshtastic's `SinglePortModule` (the same pattern as
