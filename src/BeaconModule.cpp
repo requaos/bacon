@@ -67,7 +67,7 @@ ProcessMessage BeaconModule::handleReceived(const meshtastic_MeshPacket &mp)
 
     if (knownNodes.find(sender) == knownNodes.end()) {
         // SCENARIO 1: brand new node
-        sendDm(mp, "Welcome to the local mesh! - Beacon");
+        sendDm(mp, BEACON_MSG_WELCOME);
         knownNodes[sender] = now;
 
         // Memory guard: drop the oldest entry if the limit is exceeded
@@ -79,7 +79,7 @@ ProcessMessage BeaconModule::handleReceived(const meshtastic_MeshPacket &mp)
         uint32_t timeSinceLastSeen = now - knownNodes[sender];
 
         if (timeSinceLastSeen > RE_ENTRY_DURATION_MS) {
-            sendDm(mp, "Welcome back to the area! - Beacon");
+            sendDm(mp, BEACON_MSG_WELCOME_BACK);
         }
 
         // Reset the 3-hour clock

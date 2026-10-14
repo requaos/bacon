@@ -7,6 +7,23 @@
 #include <cstdint>
 #include <map>
 
+// Greeting texts. Override at build time by setting BEACON_WELCOME_MSG /
+// BEACON_WELCOME_BACK_MSG when running build.sh — it generates
+// BeaconMsgConfig.h next to this file, which takes precedence over these
+// defaults. Keep overrides to a single line of at most ~200 bytes (the
+// payload is truncated on air anyway).
+#if __has_include("BeaconMsgConfig.h")
+#include "BeaconMsgConfig.h"
+#endif
+
+#ifndef BEACON_MSG_WELCOME
+#define BEACON_MSG_WELCOME "Welcome to the local mesh! - Beacon"
+#endif
+
+#ifndef BEACON_MSG_WELCOME_BACK
+#define BEACON_MSG_WELCOME_BACK "Welcome back to the area! - Beacon"
+#endif
+
 /**
  * Beacon: a welcome-bot for the local mesh.
  *

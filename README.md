@@ -63,6 +63,28 @@ versioned UF2 file, e.g. `firmware-rak_wismeshtag-2.8.2.f7f66b4.uf2`
 (depending on the upstream version at clone time). The first build also
 downloads the ARM toolchain and framework packages into `~/.platformio`.
 
+### Configuring the beacon messages
+
+The greeting texts are compile-time settings. Pass one or both environment
+variables to `build.sh`:
+
+```shell
+BEACON_WELCOME_MSG="Hey neighbor, welcome to the mesh!" \
+BEACON_WELCOME_BACK_MSG="Welcome back, stranger!" \
+    ./build.sh
+```
+
+`build.sh` generates a `BeaconMsgConfig.h` header next to the module that
+overrides the defaults built into `src/BeaconModule.h` (quotes and backslashes
+in the text are escaped automatically). Keep each message to a single line of
+at most ~200 bytes — longer texts are truncated to fit the radio payload.
+Without the variables, any previously generated header is removed and the
+defaults are used. Changing the text requires reflashing the node.
+
+The re-entry window (3 hours) and tracker capacity (250 nodes) are resource
+guards and stay as constants in `src/BeaconModule.h` (`RE_ENTRY_DURATION_MS`,
+`MAX_TRACKED_NODES`).
+
 ### 3. Flash the WisMesh Tag
 
 1. Double-press the reset button to enter the UF2 bootloader.
