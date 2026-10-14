@@ -89,19 +89,64 @@ ProcessMessage BeaconModule::handleReceived(const meshtastic_MeshPacket &mp)
     return ProcessMessage::CONTINUE;
 }
 
+// Append s to buf, returning the new total length.
+static size_t appendText(char *buf, size_t len, size_t cap, const char *s)
+{
+    while (*s && len + 1 < cap) {
+        buf[len++] = *s++;
+    }
+    return len;
+}
+
+#if BEACON_INCLUDE_POSITION
+// Append coord (1e-7 fixed-point degrees) as decimal degrees with 5
+// fractional digits. Integer math only: newlib-nano has no %f support.
+static size_t appendCoord(char *buf, size_t len, size_t cap, int32_t coord)
+{
+    if (len + 1 >= cap) {
+        return len;
+    }
+    bool neg = coord < 0;
+    uint32_t abs7 = neg ? (uint32_t)-coord : (uint32_t)coord; // |coord| <= 1.8e9, no INT32_MIN risk
+    uint32_t deg = abs7 / 10000000U;
+    uint32_t frac = (abs7 % 10000000U) / 100U;
+    int n = snprintf(buf + len, cap - len, "%s%lu.%05lu", neg ? "-" : "", (unsigned long)deg, (unsigned long)frac);
+    if (n < 0 || (size_t)n > cap - len - 1) {
+        n = (int)(cap - len - 1);
+    }
+    return len + (size_t)n;
+}
+#endif
+
 void BeaconModule::sendDm(const meshtastic_MeshPacket &rx, const char *text)
 {
+    // Matches meshtastic_Data_payload_t capacity (233 bytes).
+    char payload[233];
+    size_t len = 0;
+
+    len = appendText(payload, 0, sizeof(payload), text);
+
+#if BEACON_INCLUDE_POSITION
+    // Same source PositionModule broadcasts from; 0/0 means "no position".
+    if (localPosition.latitude_i != 0 || localPosition.longitude_i != 0) {
+        len = appendText(payload, len, sizeof(payload), " (");
+        len = appendCoord(payload, len, sizeof(payload), localPosition.latitude_i);
+        len = appendText(payload, len, sizeof(payload), ", ");
+        len = appendCoord(payload, len, sizeof(payload), localPosition.longitude_i);
+        len = appendText(payload, len, sizeof(payload), ")");
+    }
+#endif
+
     meshtastic_MeshPacket *p = allocDataPacket();
     p->to = rx.from;
     p->channel = rx.channel;
     p->want_ack = false;
 
-    size_t len = strlen(text);
     if (len > sizeof(p->decoded.payload.bytes)) {
         len = sizeof(p->decoded.payload.bytes);
     }
     p->decoded.payload.size = len;
-    memcpy(p->decoded.payload.bytes, text, len);
+    memcpy(p->decoded.payload.bytes, payload, len);
 
     service->sendToMesh(p);
 }

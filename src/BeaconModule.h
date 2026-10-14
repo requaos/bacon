@@ -24,6 +24,14 @@
 #define BEACON_MSG_WELCOME_BACK "Welcome back to the area! - Beacon"
 #endif
 
+// Append the beacon's own coordinates to greetings (build.sh:
+// BEACON_INCLUDE_POSITION=1). Uses the node's current position — GPS fix
+// or a fixed position set from the app — and silently omits the coordinates
+// if none is known yet.
+#ifndef BEACON_INCLUDE_POSITION
+#define BEACON_INCLUDE_POSITION 0
+#endif
+
 /**
  * Beacon: a welcome-bot for the local mesh.
  *

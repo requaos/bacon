@@ -81,6 +81,22 @@ at most ~200 bytes — longer texts are truncated to fit the radio payload.
 Without the variables, any previously generated header is removed and the
 defaults are used. Changing the text requires reflashing the node.
 
+### Including the beacon's location
+
+Set `BEACON_INCLUDE_POSITION=1` to append the node's own coordinates to both
+greetings, e.g.:
+
+```text
+Welcome to the local mesh! - Beacon (52.12345, -1.56789)
+```
+
+The position is read from the same source the firmware's position broadcasts
+use — a live GPS fix on the WisMesh Tag, or a fixed position set from the
+phone app. If no position is known when a greeting is sent, the plain message
+goes out without coordinates (so the feature degrades gracefully on a node
+without GPS and never sends `0, 0`). Coordinates are formatted with integer
+math only, since the MCU's libc has no float printf.
+
 The re-entry window (3 hours) and tracker capacity (250 nodes) are resource
 guards and stay as constants in `src/BeaconModule.h` (`RE_ENTRY_DURATION_MS`,
 `MAX_TRACKED_NODES`).
